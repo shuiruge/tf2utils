@@ -1,2 +1,4 @@
 # tf2utils
-Utils for TensorFlow (Version 2)
+
+Collection of utils for TensorFlow (version 2). All in one file.
+
