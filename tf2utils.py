@@ -1,10 +1,13 @@
-# Utils for TensorFlow. Modified from https://www.tensorflow.org/guide/core/mlp_core
+"""Utils for TensorFlow 2.
+
+Modified from https://www.tensorflow.org/guide/core/mlp_core
+"""
 
 import tensorflow as tf
 
 
 def xavier_init(shape):
-  # Computes the xavier initialization values for a weight matrix
+  """Computes the xavier initialization values for a weight matrix."""
   in_dim, out_dim = shape
   xavier_lim = tf.sqrt(6.)/tf.sqrt(tf.cast(in_dim + out_dim, tf.float32))
   weight_vals = tf.random.uniform(shape=(in_dim, out_dim),
@@ -54,12 +57,12 @@ def accuracy(y_pred, y_true):
 
 class Adam(tf.Module):
 
-  def __init__(self, learning_rate=1e-3, beta_1=0.9, beta_2=0.999, ep=1e-7):
+  def __init__(self, learning_rate=1e-3, beta_1=0.9, beta_2=0.999, eps=1e-7):
     # Initialize the Adam parameters
     self.beta_1 = beta_1
     self.beta_2 = beta_2
     self.learning_rate = learning_rate
-    self.ep = ep
+    self.eps = eps
     self.t = 1.
     self.v_dvar, self.s_dvar = [], []
     self.built = False
@@ -83,13 +86,13 @@ class Adam(tf.Module):
       v_dvar_bc = self.v_dvar[i]/(1-(self.beta_1**self.t))
       s_dvar_bc = self.s_dvar[i]/(1-(self.beta_2**self.t))
       # Update model variables
-      var.assign_sub(self.learning_rate*(v_dvar_bc/(tf.sqrt(s_dvar_bc) + self.ep)))
+      var.assign_sub(self.learning_rate*(v_dvar_bc/(tf.sqrt(s_dvar_bc) + self.eps)))
     # Increment the iteration counter
     self.t += 1.
 
 
 def train_step(x_batch, y_batch, loss, model, optimizer, accuracy=None):
-  # Update the model state given a batch of data
+  """Update the model state given a batch of data."""
   with tf.GradientTape() as tape:
     y_pred = model(x_batch)
     batch_loss = loss(y_pred, y_batch)
@@ -99,8 +102,8 @@ def train_step(x_batch, y_batch, loss, model, optimizer, accuracy=None):
   return batch_loss, batch_acc
 
 
-def val_step(x_batch, y_batch, loss, model, accuracy=None):
-  # Evaluate the model on given a batch of validation data
+def validate_step(x_batch, y_batch, loss, model, accuracy=None):
+  """Evaluate the model on given a batch of validation data."""
   y_pred = model(x_batch)
   batch_loss = loss(y_pred, y_batch)
   batch_acc = accuracy(y_pred, y_batch) if accuracy else None
