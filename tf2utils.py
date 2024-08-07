@@ -39,7 +39,8 @@ class DenseLayer(tf.Module):
 
 def cross_entropy_loss(logits, labels):
   """Compute cross entropy loss with a sparse operation."""
-  sparse_ce = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=labels)
+  sparse_ce = tf.nn.sparse_softmax_cross_entropy_with_logits(
+      logits=logits, labels=labels)
   return tf.reduce_mean(sparse_ce)
 
 
@@ -55,16 +56,24 @@ def accuracy(y_pred, y_true):
   return tf.reduce_mean(tf.cast(is_equal, tf.float32))
 
 
-class Adam(tf.Module):
+class AdamW(tf.Module):
 
-  def __init__(self, learning_rate=1e-3, beta_1=0.9, beta_2=0.999, eps=1e-7):
-    # Initialize the Adam parameters
+  def __init__(self,
+               learning_rate=1e-3,
+               beta_1=0.9,
+               beta_2=0.999,
+               weight_decay=0.01,
+               eps=1e-7):
+    self.learning_rate = learning_rate
     self.beta_1 = beta_1
     self.beta_2 = beta_2
-    self.learning_rate = learning_rate
+    self.weight_decay = weight_decay
     self.eps = eps
+
+    # Initialize the Adam parameters
     self.t = 1.
-    self.v_dvar, self.s_dvar = [], []
+    self.v_dvar = []
+    self.s_dvar = []
     self.built = False
 
   def apply_gradients(self, grads, vars):
@@ -86,7 +95,9 @@ class Adam(tf.Module):
       v_dvar_bc = self.v_dvar[i]/(1-(self.beta_1**self.t))
       s_dvar_bc = self.s_dvar[i]/(1-(self.beta_2**self.t))
       # Update model variables
-      var.assign_sub(self.learning_rate*(v_dvar_bc/(tf.sqrt(s_dvar_bc) + self.eps)))
+      var.assign_sub(self.learning_rate * (
+          v_dvar_bc / (tf.sqrt(s_dvar_bc) + self.eps) + self.weight_decay * var
+      ))
     # Increment the iteration counter
     self.t += 1.
 
@@ -108,4 +119,3 @@ def validate_step(x_batch, y_batch, loss, model, accuracy=None):
   batch_loss = loss(y_pred, y_batch)
   batch_acc = accuracy(y_pred, y_batch) if accuracy else None
   return batch_loss, batch_acc
-
